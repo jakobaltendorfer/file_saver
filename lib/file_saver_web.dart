@@ -1,10 +1,11 @@
 import 'dart:async';
+import 'dart:js_interop';
 // In order to *not* need this ignore, consider extracting the "web" version
 // of your plugin as a separate package, instead of inlining it in the same
 // package as the core of your plugin.
 // ignore: avoid_web_libraries_in_flutter
-import 'dart:html';
-
+import 'package:web/helpers.dart';
+import 'package:web/web.dart' as web;
 import 'package:file_saver/src/models/file.model.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
@@ -40,17 +41,13 @@ class FileSaverWeb {
     bool success = false;
 
     try {
-      String url = Url.createObjectUrlFromBlob(
-          Blob([fileModel.bytes], fileModel.mimeType));
-
-      HtmlDocument htmlDocument = document;
-      AnchorElement anchor = htmlDocument.createElement('a') as AnchorElement;
-      anchor.href = url;
-      anchor.style.display = fileModel.name + fileModel.ext;
-      anchor.download = fileModel.name + fileModel.ext;
-      document.body!.children.add(anchor);
+      final anchor = web.document.createElement('a') as HTMLAnchorElement;
+      anchor.setAttribute('href', web.URL.createObjectURL(web.Blob([fileModel.bytes.toJS].toJS)));
+      anchor.setAttribute('download', fileModel.name + fileModel.ext);
+      anchor.style.display = 'none';
+      document.body!.append(anchor);
       anchor.click();
-      document.body!.children.remove(anchor);
+      anchor.remove();      
       success = true;
     } catch (e) {
       rethrow;
